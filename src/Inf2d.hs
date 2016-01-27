@@ -1,4 +1,4 @@
--- Inf2D Assignment 1
+-- Inf2D Assignment 1 (Last updated: 25 Jan 2016)
 
 -- Good Scholarly Practice
 -- Please remember the University requirement as regards all assessed work for credit. 
@@ -17,7 +17,7 @@ import Debug.Trace
 import Data.Ord
 import Data.Maybe
 -- Type synonyms for the data structures
--- Symbols are integers (negative integers represent negated symbols)
+-- Symbols are strings (a negative sign as the first character represents a negated symbol)
 type Symbol = String  
 -- Clause = a disjuntion of symbols
 type Clause = [Symbol] 
