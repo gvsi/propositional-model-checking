@@ -66,13 +66,14 @@ getUnsignedSymbol symbol = if head symbol == '-' then tail symbol else symbol
 -- Gets a list of all symbols in for all given sentences
 getSymbols :: [Sentence] -> [Symbol]
 -- getSymbols stmts = [ | stmt <- stmts]
-getSymbols stmts = nub $ foldr (++) [] $ foldr (++) [] stmts
+getSymbols stmts = nub $ map getUnsignedSymbol $ concat $ concat stmts
 ----------TASK 3: TRUTH TABLE ENUMERATION AND ENTAILMENT (40 marks)---------------------------------
 
 -- Function takes as input a list of symbols, and returns a list of models (all possible assignment
 -- of True or False to the symbols.)
 generateModels :: [Symbol] -> [Model]
-generateModels symbols = undefined
+generateModels [x] = [[(x, True)], [(x, False)]]
+generateModels (x:xs) = concat $ map ( \t -> [(x, True) : t] ++ [(x, False) : t]) (generateModels xs)
 
 -- This function evaluates the truth value of a propositional sentence using the symbols
 -- assignments in the model.
