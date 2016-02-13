@@ -48,7 +48,8 @@ wumpusFact = [["-B12","P11","P22","P31"],["-P11","B12"],["-P22","B12"],["-P31","
 
 -- Finds the assigned literal to a symbol from a given model
 lookupAssignment :: Symbol -> Model -> Maybe Bool
-lookupAssignment symbol model = Just (snd $ head $ filter (\x -> fst x == symbol) model)
+lookupAssignment symbol model = if null res then Nothing else Just (snd $ head $ res)
+  where res = filter (\x -> fst  x == symbol) model
 
 -- Negate a symbol
 negateSymbol :: Symbol -> Symbol
@@ -78,7 +79,7 @@ generateModels (x:xs) = concat $ map ( \t -> [(x, True) : t] ++ [(x, False) : t]
 -- This function evaluates the truth value of a propositional sentence using the symbols
 -- assignments in the model.
 pLogicEvaluate :: Sentence -> Model -> Bool
-pLogicEvaluate stmt model =  and [ or [ eval symbol | symbol <- symbols ] | symbols <- stmt]
+pLogicEvaluate stmt model =  and [ or [ eval symbol | symbol <- clause ] | clause <- stmt]
                              where eval sym = if isNegated sym then
                                                 not $ fromJust(lookupAssignment (getUnsignedSymbol sym) model)
                                               else
@@ -112,7 +113,14 @@ ttEntailsModels kb query = ttCheckAll kb query (getSymbols (query : kb))
 -- The early termination function checks if a sentence is true or false even with a
 -- partially completed model.
 earlyTerminate :: Sentence -> Model -> Bool
-earlyTerminate sentence model = undefined
+earlyTerminate sentence model = and [ or [ eval symbol | symbol <- clause] | clause <- sentence]
+  where eval sym = if lookupAssignment (getUnsignedSymbol sym) model == Nothing then
+                    False
+                   else
+                     if isNegated sym then
+                       not $ fromJust(lookupAssignment (getUnsignedSymbol sym) model)
+                     else
+                       fromJust(lookupAssignment (getUnsignedSymbol sym) model)
 
 -- This function finds pure symbol, i.e, a symbol that always appears with the same "sign" in all
 -- clauses.
@@ -120,7 +128,22 @@ earlyTerminate sentence model = undefined
 -- It returns Just a tuple of a symbol and the truth value to assign to that
 -- symbol. If no pure symbol is found, it should return Nothing
 findPureSymbol :: [Symbol] -> [Clause] -> Model -> Maybe (Symbol, Bool)
-findPureSymbol symbols clauses model = undefined
+findPureSymbol symbols clauses model = if null pureSymbols then Nothing else Just ((head pureSymbols), not (elem (head pureSymbols) allSyms))
+  where
+    pureSymbols = [ symbol | symbol <- symbols, isPure symbol]
+    isPure sym = (elem sym allSyms && not (elem (negateSymbol sym) allSyms)) ||
+      (elem (negateSymbol sym) (concat clausesToCheck) && not (elem sym allSyms))
+    allSyms = concat clausesToCheck
+    clausesToCheck = filter (\clause -> not (evalClause clause)) clauses
+    evalClause clause = or (map evalSymbol clause)
+    evalSymbol sym =  if lookupAssignment (getUnsignedSymbol sym) model == Nothing then
+                       False
+                      else
+                       if isNegated sym then
+                        not $ fromJust(lookupAssignment (getUnsignedSymbol sym) model)
+                       else
+                        fromJust(lookupAssignment (getUnsignedSymbol sym) model)
+
 
 -- This function finds a unit clause from a given list of clauses and a model of assignments.
 -- It returns Just a tuple of a symbol and the truth value to assign to that symbol. If no unit
