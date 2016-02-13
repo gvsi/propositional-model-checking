@@ -78,31 +78,34 @@ generateModels (x:xs) = concat $ map ( \t -> [(x, True) : t] ++ [(x, False) : t]
 -- This function evaluates the truth value of a propositional sentence using the symbols
 -- assignments in the model.
 pLogicEvaluate :: Sentence -> Model -> Bool
-pLogicEvaluate stmt model =  undefined
+pLogicEvaluate stmt model =  and [ or [ eval symbol | symbol <- symbols ] | symbols <- stmt]
+                             where eval sym = if isNegated sym then
+                                                not $ fromJust(lookupAssignment (getUnsignedSymbol sym) model)
+                                              else
+                                                fromJust(lookupAssignment (getUnsignedSymbol sym) model)
 
 -- This function checks the truth value of list of a propositional sentence using the symbols
 -- assignments in the model. It returns true only when all sentences in the list are true.
 plTrue :: [Sentence]-> Model -> Bool
-plTrue sentences model = undefined
+plTrue sentences model = and [pLogicEvaluate sentence model | sentence <- sentences]
 
 -- This function takes as input a knowledgebase (i.e. a list of propositional sentences),
 -- a query (i.e. a propositional sentence), and a list of symbols.
 -- IT recursively enumerates the models of the domain using its symbols to check if there
 -- is a model that satisfies the knowledge base and the query. It returns a list of all such models.
 ttCheckAll :: [Sentence] -> Sentence -> [Symbol] -> [Model]
-ttCheckAll kb query symbols = undefined
+ttCheckAll kb query symbols = [ model | model <- generateModels symbols, if plTrue kb model then pLogicEvaluate query model else True]
 
 -- This function determines if a model satisfes both the knowledge base and the query, returning
 -- true or false.
 ttEntails :: [Sentence] -> Sentence -> Bool
-ttEntails kb query =  undefined
+ttEntails kb query = not $ null $ ttCheckAll kb query (getSymbols (query : kb))
 
 
 -- This function determines if a model satisfes both the knowledge base and the query.
 -- It returns a list of all models for which the knowledge base entails the query.
 ttEntailsModels :: [Sentence] -> Sentence -> [Model]
-ttEntailsModels kb query =  undefined
-
+ttEntailsModels kb query = ttCheckAll kb query (getSymbols (query : kb))
 
 ----------TASK 4: DPLL (43 marks)-------------------------------------------------------------------
 
