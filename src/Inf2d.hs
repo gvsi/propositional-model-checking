@@ -149,7 +149,27 @@ findPureSymbol symbols clauses model = if null pureSymbols then Nothing else Jus
 -- It returns Just a tuple of a symbol and the truth value to assign to that symbol. If no unit
 -- clause is found, it should return Nothing.
 findUnitClause :: [Clause] -> Model -> Maybe (Symbol, Bool)
-findUnitClause clauses model = undefined
+--  && unitClauseConsideringFalseSymbols clause
+findUnitClause clauses model = if null unitClauses then Nothing else Just (unitSymbol unitClauses, not (isNegated (unitSymbol unitClauses)))
+  where
+    unitClauses = [clause | clause <- clauses, not (hasTrueSymbols clause) && isUnitClause clause]
+    unitSymbol unitClauses = head (filter (isNotFalse) (head unitClauses))
+    hasTrueSymbols clause = or (map evalSymbol clause)
+    isUnitClause clause = length (filter (isNotFalse) clause) == 1
+    evalSymbol sym =  if lookupAssignment (getUnsignedSymbol sym) model == Nothing then
+                       False
+                      else
+                       if isNegated sym then
+                        not $ fromJust(lookupAssignment (getUnsignedSymbol sym) model)
+                       else
+                        fromJust(lookupAssignment (getUnsignedSymbol sym) model)
+    isNotFalse sym = if lookupAssignment (getUnsignedSymbol sym) model == Nothing then
+                      True
+                     else
+                      if isNegated sym then
+                       not $ fromJust(lookupAssignment (getUnsignedSymbol sym) model)
+                      else
+                       fromJust(lookupAssignment (getUnsignedSymbol sym) model)
 
 
 -- This function check the satisfability of a sentence in propositional logic. It takes as input a
