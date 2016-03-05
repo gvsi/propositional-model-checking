@@ -112,11 +112,17 @@ plTrue sentences model = and [pLogicEvaluate sentence model | sentence <- senten
 -- IT recursively enumerates the models of the domain using its symbols to check if there
 -- is a model that satisfies the knowledge base and the query. It returns a list of all such models.
 
--- Checks between all possible models generated from the symbols, whether the kb and query are satisfiable
--- Could have implemented a recursive helper method, but here I am leveraging the
--- generateModels, which has already been implemented
+-- Recusively builds all the models from the symbols using a helper function (ttCheckAll_rec)
+-- Once the symbols are exausted, algorithm validates each model and concatenates
+-- the valid ones into an array of models
+
 ttCheckAll :: [Sentence] -> Sentence -> [Symbol] -> [Model]
-ttCheckAll kb query symbols = [ model | model <- generateModels symbols, if plTrue kb model then pLogicEvaluate query model else True]
+ttCheckAll kb query symbols = ttCheckAll_rec kb query symbols []
+
+ttCheckAll_rec :: [Sentence] -> Sentence -> [Symbol] -> Model -> [Model]
+ttCheckAll_rec kb query symbols model | null symbols = if plTrue kb model then (if pLogicEvaluate query model then [model] else []) else [model]
+                                      | otherwise = ttCheckAll_rec kb query (tail symbols) (model ++ [(head symbols, True)]) ++
+                                                    ttCheckAll_rec kb query (tail symbols) (model ++ [(head symbols, False)])
 
 -- This function determines if a model satisfes both the knowledge base and the query, returning
 -- true or false.
@@ -222,7 +228,6 @@ dpllSatisfiable clauses = dpll clauses (getSymbols [clauses])
 -- logic), and a query sentence. Both items should have their clauses in CNF representation
 -- and should be assigned to the following respectively:
 
--- a valid model would be B = False, A = True, D = True, C = True
 evalKB :: [Sentence]
 evalKB = [[["A","B"],["C","D"]],[["-B","D"],["A","B","D"]],[["E"],["F"],["G"],["H"],["I"],["J"]]]
 
